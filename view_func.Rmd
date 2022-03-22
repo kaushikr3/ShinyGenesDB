@@ -1,6 +1,5 @@
 ---
 title: "view function"
-output: html_document
 ---
 #this is a function to view the data that has been uploaded by the user
 
