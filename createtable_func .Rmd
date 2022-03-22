@@ -1,0 +1,16 @@
+---
+title: "create table function"
+output: html_document
+---
+
+```{r}
+createtable_func = function(input, output, session) {
+    dbWriteTable(con, input$name, 
+                 read.csv(input$file1$datapath, 
+                          header = input$header, 
+                          sep = input$sep),overwrite = T)
+    
+    dbGetQuery(con, input$query)
+}
+```
+
