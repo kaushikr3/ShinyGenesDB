@@ -8,6 +8,7 @@
 #
 
 library(shiny)
+library(DBI)
 library(RSQLite)
 
 # Define UI for application that draws a histogram
@@ -23,7 +24,7 @@ ui <- fluidPage(
       # Input: Select a file ----
       fileInput("file1", "Choose File",
                 multiple = TRUE
-                ),
+      ),
       
       # Horizontal line ----
       tags$hr(),
@@ -43,79 +44,59 @@ ui <- fluidPage(
                    choices = c(Head = "head",
                                All = "all"),
                    selected = "head"),
-      
-      #actionButton("view", "View Data"),
+       
+      # buttons to view certain results 
+      actionButton("view", "View Data"),
       
       actionButton("create", "Create Table"),
       
-      actionButton("db", "View DB")
-
+      #actionButton("db", "Update DB"),
+      
+      #text box for giving a query
+      textInput("name", "Give a name for the database", value = ""),
+      textInput("query", "Write a query to get data from DB", value = "")
+      
     ),
     
     # Main panel for displaying outputs ----
     mainPanel(
       
       # Output: Data file ----
+      
       tableOutput("contents"),
       tableOutput("table"),
-      tableOutput("viewdb")
+      #tableOutput("viewdb")
     )
-    
   )
 )
 
 # Define server logic required to show contents of uploaded file
 server <- function(input, output) {
-
+  
+  viewdata = eventReactive(input$view,
+                           viewdata_func(input)
+                           )
+  
+  #display the uploaded dataframe df
   output$contents <- renderTable({
-      
-      # input$file1 will be NULL initially. After the user selects
-      # and uploads a file, head of that data file by default,
-      # or all rows if selected, will be shown.
-      req(input$file1)
-      
-      df <- read.csv(input$file1$datapath,
-                     header = input$header,
-                     sep = input$sep)
-      
-      if(input$disp == "head") {
-        return(head(df))
-      }
-      else {
-        return(df)
-      }
-    })
-    
-    # reactive event to create a table with uploaded data
-  output$table <- eventReactive(input$create,{
-    drv<-dbDriver("SQLite")
-    con<-dbConnect(drv, "genelist.sqlite")
-    
-    if (dbExistsTable(con, "genelist")) {
-      dbSendQuery(con, "drop table genelist")
-    }
-    
-    dbWriteTable(con, "genelist", read.csv(input$file1$datapath,
-                                           header = input$header,
-                                           sep = input$sep))
-    #dbGetQuery(con, "SELECT * FROM genelist limit 5")
-    })
+    viewdata()
+  })
   
-  output$viewdb <- eventReactive(input$db,{
-    drv<-dbDriver("SQLite")
-    con<-dbConnect(drv, "genelist.sqlite")
-    #dbReadTable(con, "genelist")
-    #dbSendQuery(con, "SELECT name FROM genelist limit 5")
-    dbExecute(con, "INSERT INTO genelist 
-               VALUES ('HLA-DQA1','Major histocompatibility complex, class II, DQ alpha 1','plays a central role in the immune system by presenting peptides derived from extracellular proteins','') ")
-    #dbGetQuery(con)
-    })
+  #create a table using an action button
+  create = eventReactive(input$create,
+                         createtable_func(input)
+                         )
   
-#dbDisconnect(con)
+  #display the created table
+  output$table <- renderTable({
+    create()
+  })
+  
 }
-
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+
 
 
 
