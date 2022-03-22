@@ -2,6 +2,7 @@
 title: "create table function"
 output: html_document
 ---
+# this is a function to create a sql database with the data provided by the user.
 
 ```{r}
 createtable_func = function(input, output, session) {
